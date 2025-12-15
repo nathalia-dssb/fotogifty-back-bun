@@ -8,6 +8,7 @@ import { PrismaFotoRepository } from '../repositories/prisma-foto.repository';
 import { PrismaItemsPedidoRepository } from '../repositories/prisma-items-pedido.repository';
 import { PrismaPedidoRepository } from '../repositories/prisma-pedido.repository';
 import { PrismaPaqueteRepository } from '../repositories/prisma-paquete.repository';
+import { authenticateToken, requireRole, requireCliente, requireAdmin } from '../middlewares/auth.middleware';
 
 // Configurar multer para memoria
 const upload = multer({
@@ -164,15 +165,19 @@ const fotoRoutes = (router: Router): void => {
    *         type: integer
    *         required: true
    *         description: ID del item del pedido
+   *     security:
+   *       - bearerAuth: []
    *     responses:
    *       200:
    *         description: Foto subida y guardada exitosamente
    *       400:
    *         description: Error en los datos enviados
+   *       401:
+   *         description: Acceso no autorizado
    *       500:
    *         description: Error interno del servidor
    */
-  router.post('/fotos/upload', upload.single('foto'), handleMulterError, (req, res) =>
+  router.post('/fotos/upload', authenticateToken, upload.single('foto'), handleMulterError, (req, res) =>
     fotoController.subirFoto(req, res)
   );
 };

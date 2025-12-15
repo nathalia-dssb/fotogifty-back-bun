@@ -1,11 +1,3 @@
-export interface DireccionEnvio {
-  calle: string;
-  ciudad: string;
-  estado: string;
-  codigo_postal: string;
-  pais: string;
-}
-
 export interface ItemPedido {
   id_paquete: number;
   nombre_paquete: string;
@@ -35,12 +27,12 @@ export enum EstadoPago {
 export interface Pedido {
   id?: number;
   id_usuario?: number;  // Relación con el usuario que hizo el pedido
+  id_direccion?: number; // Relación con la dirección de envío
   id_pago_stripe?: string;
   id_sesion_stripe?: string;
   nombre_cliente: string;
   email_cliente: string;
   telefono_cliente?: string;
-  direccion_envio: DireccionEnvio;
   fecha_pedido: Date;
   items_pedido: ItemPedido[];
   estado: EstadoPedido;
@@ -56,12 +48,12 @@ export interface Pedido {
 export class PedidoEntity implements Pedido {
   public id?: number;
   public id_usuario?: number;
+  public id_direccion?: number;
   public id_pago_stripe?: string;
   public id_sesion_stripe?: string;
   public nombre_cliente: string;
   public email_cliente: string;
   public telefono_cliente?: string;
-  public direccion_envio: DireccionEnvio;
   public fecha_pedido: Date;
   public items_pedido: ItemPedido[];
   public estado: EstadoPedido;
@@ -75,9 +67,9 @@ export class PedidoEntity implements Pedido {
 
   constructor(
     id_usuario: number | undefined,
+    id_direccion: number | undefined,
     nombre_cliente: string,
     email_cliente: string,
-    direccion_envio: DireccionEnvio,
     items_pedido: ItemPedido[],
     subtotal: number,
     iva: number,
@@ -92,12 +84,12 @@ export class PedidoEntity implements Pedido {
   ) {
     this.id = id;
     this.id_usuario = id_usuario;
+    this.id_direccion = id_direccion;
     this.id_pago_stripe = id_pago_stripe;
     this.id_sesion_stripe = id_sesion_stripe;
     this.nombre_cliente = nombre_cliente;
     this.email_cliente = email_cliente;
     this.telefono_cliente = telefono_cliente;
-    this.direccion_envio = direccion_envio;
     this.fecha_pedido = new Date();
     this.items_pedido = items_pedido;
     this.estado = estado;
@@ -112,9 +104,9 @@ export class PedidoEntity implements Pedido {
 
   static create(
     id_usuario: number | undefined,
+    id_direccion: number | undefined,
     nombre_cliente: string,
     email_cliente: string,
-    direccion_envio: DireccionEnvio,
     items_pedido: ItemPedido[],
     subtotal: number,
     iva: number,
@@ -125,9 +117,9 @@ export class PedidoEntity implements Pedido {
   ): PedidoEntity {
     return new PedidoEntity(
       id_usuario,
+      id_direccion,
       nombre_cliente,
       email_cliente,
-      direccion_envio,
       items_pedido,
       subtotal,
       iva,

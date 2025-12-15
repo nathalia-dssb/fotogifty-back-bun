@@ -9,6 +9,7 @@ import { PrismaPaqueteRepository } from '../repositories/prisma-paquete.reposito
 import { SubirFotoUseCase } from '../../application/use-cases/subir-foto.use-case';
 import { S3Service } from '../services/s3.service';
 import { PrismaFotoRepository } from '../repositories/prisma-foto.repository';
+import { authenticateToken, requireRole, requireCliente, requireAdmin } from '../middlewares/auth.middleware';
 
 // Configurar multer para memoria
 const upload = multer({
@@ -80,7 +81,7 @@ const pedidoRoutes = (router: Router): void => {
    * @swagger
    * /api/pedidos:
    *   post:
-   *     summary: Crear un nuevo pedido
+   *     summary: Crear un nuevo pedido (solo para clientes autenticados)
    *     tags: [Pedidos]
    *     requestBody:
    *       required: true
@@ -175,6 +176,8 @@ const pedidoRoutes = (router: Router): void => {
    *                 type: number
    *                 description: Total del pedido
    *                 example: 695.97
+   *     security:
+   *       - bearerAuth: []
    *     responses:
    *       201:
    *         description: Pedido creado exitosamente
@@ -189,10 +192,12 @@ const pedidoRoutes = (router: Router): void => {
    *                   $ref: '#/components/schemas/Pedido'
    *       400:
    *         description: Datos de entrada inválidos
+   *       401:
+   *         description: Acceso no autorizado
    *       500:
    *         description: Error interno del servidor
    */
-  router.post('/pedidos', (req, res) =>
+  router.post('/pedidos', authenticateToken, requireCliente, (req, res) =>
     pedidoController.crearPedido(req, res)
   );
 
@@ -200,8 +205,10 @@ const pedidoRoutes = (router: Router): void => {
    * @swagger
    * /api/pedidos:
    *   get:
-   *     summary: Obtener todos los pedidos
+   *     summary: Obtener todos los pedidos (solo para administradores)
    *     tags: [Pedidos]
+   *     security:
+   *       - bearerAuth: []
    *     responses:
    *       200:
    *         description: Lista de todos los pedidos
@@ -216,10 +223,12 @@ const pedidoRoutes = (router: Router): void => {
    *                   type: array
    *                   items:
    *                     $ref: '#/components/schemas/Pedido'
+   *       401:
+   *         description: Acceso no autorizado
    *       500:
    *         description: Error interno del servidor
    */
-  router.get('/pedidos', (req, res) =>
+  router.get('/pedidos', authenticateToken, requireAdmin, (req, res) =>
     pedidoController.getAllPedidos(req, res)
   );
 
@@ -236,6 +245,8 @@ const pedidoRoutes = (router: Router): void => {
    *         schema:
    *           type: integer
    *         description: ID del pedido
+   *     security:
+   *       - bearerAuth: []
    *     responses:
    *       200:
    *         description: Pedido encontrado
@@ -250,12 +261,14 @@ const pedidoRoutes = (router: Router): void => {
    *                   $ref: '#/components/schemas/Pedido'
    *       400:
    *         description: ID de pedido inválido
+   *       401:
+   *         description: Acceso no autorizado
    *       404:
    *         description: Pedido no encontrado
    *       500:
    *         description: Error interno del servidor
    */
-  router.get('/pedidos/:id', (req, res) =>
+  router.get('/pedidos/:id', authenticateToken, (req, res) =>
     pedidoController.getPedidoById(req, res)
   );
 
@@ -272,6 +285,8 @@ const pedidoRoutes = (router: Router): void => {
    *         schema:
    *           type: integer
    *         description: ID del usuario
+   *     security:
+   *       - bearerAuth: []
    *     responses:
    *       200:
    *         description: Lista de pedidos del usuario
@@ -288,12 +303,14 @@ const pedidoRoutes = (router: Router): void => {
    *                     $ref: '#/components/schemas/Pedido'
    *       400:
    *         description: ID de usuario inválido
+   *       401:
+   *         description: Acceso no autorizado
    *       404:
    *         description: Usuario no encontrado
    *       500:
    *         description: Error interno del servidor
    */
-  router.get('/pedidos/usuario/:usuarioId', (req, res) =>
+  router.get('/pedidos/usuario/:usuarioId', authenticateToken, (req, res) =>
     pedidoController.getPedidosByUsuarioId(req, res)
   );
 
@@ -301,7 +318,7 @@ const pedidoRoutes = (router: Router): void => {
    * @swagger
    * /api/pedidos/estado/{estado}:
    *   get:
-   *     summary: Obtener pedidos por estado
+   *     summary: Obtener pedidos por estado (solo para administradores)
    *     tags: [Pedidos]
    *     parameters:
    *       - in: path
@@ -311,6 +328,8 @@ const pedidoRoutes = (router: Router): void => {
    *           type: string
    *           enum: [Pendiente, Enviado, Imprimiendo, Empaquetado, En reparto, Entregado, Archivado]
    *         description: Estado del pedido
+   *     security:
+   *       - bearerAuth: []
    *     responses:
    *       200:
    *         description: Lista de pedidos con el estado especificado
@@ -327,10 +346,12 @@ const pedidoRoutes = (router: Router): void => {
    *                     $ref: '#/components/schemas/Pedido'
    *       400:
    *         description: Estado no válido
+   *       401:
+   *         description: Acceso no autorizado
    *       500:
    *         description: Error interno del servidor
    */
-  router.get('/pedidos/estado/:estado', (req, res) =>
+  router.get('/pedidos/estado/:estado', authenticateToken, requireAdmin, (req, res) =>
     pedidoController.getPedidosByEstado(req, res)
   );
 
@@ -338,7 +359,7 @@ const pedidoRoutes = (router: Router): void => {
    * @swagger
    * /api/pedidos/{id}/estado:
    *   patch:
-   *     summary: Actualizar el estado de un pedido
+   *     summary: Actualizar el estado de un pedido (solo para administradores)
    *     tags: [Pedidos]
    *     parameters:
    *       - in: path
@@ -361,6 +382,8 @@ const pedidoRoutes = (router: Router): void => {
    *                 enum: [Pendiente, Enviado, Imprimiendo, Empaquetado, En reparto, Entregado, Archivado]
    *                 description: Nuevo estado del pedido
    *                 example: "Enviado"
+   *     security:
+   *       - bearerAuth: []
    *     responses:
    *       200:
    *         description: Estado del pedido actualizado exitosamente
@@ -375,12 +398,14 @@ const pedidoRoutes = (router: Router): void => {
    *                   $ref: '#/components/schemas/Pedido'
    *       400:
    *         description: ID de pedido inválido o estado no válido
+   *       401:
+   *         description: Acceso no autorizado
    *       404:
    *         description: Pedido no encontrado
    *       500:
    *         description: Error interno del servidor
    */
-  router.patch('/pedidos/:id/estado', (req, res) =>
+  router.patch('/pedidos/:id/estado', authenticateToken, requireAdmin, (req, res) =>
     pedidoController.updateEstadoPedido(req, res)
   );
 
@@ -420,15 +445,19 @@ const pedidoRoutes = (router: Router): void => {
    *                 type: integer
    *                 description: ID del item del pedido
    *                 example: 1
+   *     security:
+   *       - bearerAuth: []
    *     responses:
    *       200:
    *         description: Imagen subida y asociada al pedido exitosamente
    *       400:
    *         description: Error en los datos enviados
+   *       401:
+   *         description: Acceso no autorizado
    *       500:
    *         description: Error interno del servidor
    */
-  router.post('/pedidos/:id/imagenes', upload.single('foto'), handleMulterError, (req, res) => {
+  router.post('/pedidos/:id/imagenes', authenticateToken, upload.single('foto'), handleMulterError, (req, res) => {
     // Este endpoint delega a la funcionalidad existente para subir fotos
     // pero asegurando que se relacionen correctamente con el pedido
     const pedidoId = parseInt(req.params.id);

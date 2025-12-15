@@ -237,13 +237,82 @@ const swaggerOptions: Options = {
       }
     }
   },
+  Direccion: {
+    type: 'object',
+    required: ['usuario_id', 'alias', 'pais', 'estado', 'ciudad', 'codigo_postal', 'direccion'],
+    properties: {
+      id: {
+        type: 'integer',
+        example: 1
+      },
+      usuario_id: {
+        type: 'integer',
+        example: 1
+      },
+      alias: {
+        type: 'string',
+        description: 'Nombre de la dirección (ej: "Casa", "Trabajo")',
+        example: "Casa"
+      },
+      pais: {
+        type: 'string',
+        description: 'País',
+        example: "España"
+      },
+      estado: {
+        type: 'string',
+        description: 'Estado o región',
+        example: "Madrid"
+      },
+      ciudad: {
+        type: 'string',
+        description: 'Ciudad o municipio',
+        example: "Madrid"
+      },
+      codigo_postal: {
+        type: 'string',
+        description: 'Código postal',
+        example: "28001"
+      },
+      direccion: {
+        type: 'string',
+        description: 'Calle o vía',
+        example: "Calle Principal 123"
+      },
+      numero_casa: {
+        type: 'string',
+        description: 'Número de casa (opcional)',
+        example: "123"
+      },
+      numero_departamento: {
+        type: 'string',
+        description: 'Número de departamento (opcional)',
+        example: "5B"
+      },
+      especificaciones: {
+        type: 'string',
+        description: 'Información adicional (opcional)',
+        example: "Edificio A, Puerta Azul"
+      },
+      predeterminada: {
+        type: 'boolean',
+        description: 'Indica si es la dirección predeterminada',
+        example: true
+      },
+      fecha_registro: {
+        type: 'string',
+        format: 'date-time',
+        example: '2024-01-01T12:00:00.000Z'
+      }
+    }
+  },
   Pedido: {
     type: 'object',
     required: [
       'id_usuario',
+      'id_direccion',
       'nombre_cliente',
       'email_cliente',
-      'direccion_envio',
       'items_pedido',
       'estado',
       'estado_pago',
@@ -257,6 +326,10 @@ const swaggerOptions: Options = {
         example: 1
       },
       id_usuario: {
+        type: 'integer',
+        example: 1
+      },
+      id_direccion: {
         type: 'integer',
         example: 1
       },
@@ -280,31 +353,6 @@ const swaggerOptions: Options = {
       telefono_cliente: {
         type: 'string',
         example: '+34612345678'
-      },
-      direccion_envio: {
-        type: 'object',
-        properties: {
-          calle: {
-            type: 'string',
-            example: 'Calle Falsa 123'
-          },
-          ciudad: {
-            type: 'string',
-            example: 'Madrid'
-          },
-          estado: {
-            type: 'string',
-            example: 'Madrid'
-          },
-          codigo_postal: {
-            type: 'string',
-            example: '28001'
-          },
-          pais: {
-            type: 'string',
-            example: 'España'
-          }
-        }
       },
       fecha_pedido: {
         type: 'string',

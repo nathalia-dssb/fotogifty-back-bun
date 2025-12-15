@@ -2,6 +2,7 @@ import { Router } from 'express';
 import { UsuarioController } from '../controllers/usuario.controller';
 import { CrearUsuarioUseCase } from '../../application/use-cases/crear-usuario.use-case';
 import { PrismaUsuarioRepository } from '../repositories/prisma-usuario.repository';
+import { authenticateToken, requireRole, requireCliente, requireAdmin } from '../middlewares/auth.middleware';
 
 /**
  * @swagger
@@ -95,10 +96,179 @@ const usuarioRoutes = (router: Router): void => {
 
   /**
    * @swagger
+   * /api/usuarios/{id}:
+   *   get:
+   *     summary: Obtener un usuario por ID
+   *     tags: [Usuarios]
+   *     parameters:
+   *       - in: path
+   *         name: id
+   *         required: true
+   *         schema:
+   *           type: integer
+   *         description: ID del usuario
+   *     security:
+   *       - bearerAuth: []
+   *     responses:
+   *       200:
+   *         description: Usuario encontrado
+   *         content:
+   *           application/json:
+   *             schema:
+   *               type: object
+   *               properties:
+   *                 success:
+   *                   type: boolean
+   *                 data:
+   *                   $ref: '#/components/schemas/UsuarioResponse'
+   *       400:
+   *         description: ID de usuario inválido
+   *       401:
+   *         description: Acceso no autorizado
+   *       404:
+   *         description: Usuario no encontrado
+   *       500:
+   *         description: Error interno del servidor
+   */
+  router.get('/usuarios/:id', authenticateToken, (req, res) =>
+    usuarioController.getUsuarioById(req, res)
+  );
+
+  /**
+   * @swagger
+   * /api/usuarios/{id}:
+   *   put:
+   *     summary: Actualizar información de un usuario
+   *     tags: [Usuarios]
+   *     parameters:
+   *       - in: path
+   *         name: id
+   *         required: true
+   *         schema:
+   *           type: integer
+   *         description: ID del usuario
+   *     requestBody:
+   *       required: true
+   *       content:
+   *         application/json:
+   *           schema:
+   *             type: object
+   *             properties:
+   *               nombre:
+   *                 type: string
+   *                 description: Nombre del usuario
+   *                 example: "Juan"
+   *               apellido:
+   *                 type: string
+   *                 description: Apellido del usuario
+   *                 example: "Pérez"
+   *               telefono:
+   *                 type: string
+   *                 description: Teléfono del usuario
+   *                 example: "+34612345678"
+   *               activo:
+   *                 type: boolean
+   *                 description: Estado de actividad del usuario
+   *                 example: true
+   *     security:
+   *       - bearerAuth: []
+   *     responses:
+   *       200:
+   *         description: Usuario actualizado exitosamente
+   *         content:
+   *           application/json:
+   *             schema:
+   *               type: object
+   *               properties:
+   *                 success:
+   *                   type: boolean
+   *                 data:
+   *                   $ref: '#/components/schemas/UsuarioResponse'
+   *                 message:
+   *                   type: string
+   *       400:
+   *         description: Datos de entrada inválidos
+   *       401:
+   *         description: Acceso no autorizado
+   *       404:
+   *         description: Usuario no encontrado
+   *       500:
+   *         description: Error interno del servidor
+   */
+  router.put('/usuarios/:id', authenticateToken, (req, res) =>
+    usuarioController.updateUsuario(req, res)
+  );
+
+  /**
+   * @swagger
+   * /api/usuarios/{id}/password:
+   *   put:
+   *     summary: Cambiar contraseña de un usuario
+   *     tags: [Usuarios]
+   *     parameters:
+   *       - in: path
+   *         name: id
+   *         required: true
+   *         schema:
+   *           type: integer
+   *         description: ID del usuario
+   *     requestBody:
+   *       required: true
+   *       content:
+   *         application/json:
+   *           schema:
+   *             type: object
+   *             required:
+   *               - currentPassword
+   *               - newPassword
+   *             properties:
+   *               currentPassword:
+   *                 type: string
+   *                 format: password
+   *                 description: Contraseña actual
+   *                 example: "password123"
+   *               newPassword:
+   *                 type: string
+   *                 format: password
+   *                 description: Nueva contraseña
+   *                 example: "newpassword123"
+   *     security:
+   *       - bearerAuth: []
+   *     responses:
+   *       200:
+   *         description: Contraseña actualizada exitosamente
+   *         content:
+   *           application/json:
+   *             schema:
+   *               type: object
+   *               properties:
+   *                 success:
+   *                   type: boolean
+   *                 data:
+   *                   $ref: '#/components/schemas/UsuarioResponse'
+   *                 message:
+   *                   type: string
+   *       400:
+   *         description: Datos de entrada inválidos
+   *       401:
+   *         description: Contraseña actual incorrecta o acceso no autorizado
+   *       404:
+   *         description: Usuario no encontrado
+   *       500:
+   *         description: Error interno del servidor
+   */
+  router.put('/usuarios/:id/password', authenticateToken, (req, res) =>
+    usuarioController.changePassword(req, res)
+  );
+
+  /**
+   * @swagger
    * /api/usuarios:
    *   get:
    *     summary: Obtener todos los usuarios
    *     tags: [Usuarios]
+   *     security:
+   *       - bearerAuth: []
    *     responses:
    *       200:
    *         description: Lista de todos los usuarios
@@ -129,10 +299,12 @@ const usuarioRoutes = (router: Router): void => {
    *                         format: date-time
    *                       activo:
    *                         type: boolean
+   *       401:
+   *         description: Acceso no autorizado
    *       500:
    *         description: Error interno del servidor
    */
-  router.get('/usuarios', (req, res) =>
+  router.get('/usuarios', authenticateToken, requireAdmin, (req, res) =>
     usuarioController.getAllUsuarios(req, res)
   );
 };

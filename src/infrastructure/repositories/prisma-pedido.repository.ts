@@ -222,7 +222,7 @@ export class PrismaPedidoRepository implements PedidoRepositoryPort {
       direccion_envio: {
         calle: prismaPedido.direccion.direccion,
         ciudad: prismaPedido.direccion.ciudad,
-        estado: prismaPedido.direccion.provincia,
+        estado: prismaPedido.direccion.estado,
         codigo_postal: prismaPedido.direccion.codigo_postal,
         pais: prismaPedido.direccion.pais
       },

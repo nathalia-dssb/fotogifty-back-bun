@@ -16,6 +16,9 @@ model usuarios {
   telefono              String?                @db.VarChar(20)
   fecha_registro        DateTime               @default(now())
   activo                Boolean                @default(true)
+  fecha_ultima_conexion DateTime?              @db.DateTime
+  token_recuperacion    String?                @db.VarChar(255)
+  fecha_expiracion_token DateTime?             @db.DateTime
   administrador         administradores?
   direcciones           direcciones[]
   fotos                 fotos[]
@@ -24,17 +27,20 @@ model usuarios {
 }
 
 model direcciones {
-  id             Int       @id @default(autoincrement())
-  usuario_id     Int
-  alias          String    @db.VarChar(50)
-  direccion      String    @db.Text
-  ciudad         String    @db.VarChar(100)
-  codigo_postal  String    @db.VarChar(20)
-  provincia      String    @db.VarChar(100)
-  pais           String    @default("España") @db.VarChar(100)
-  predeterminada Boolean   @default(false)
-  usuario        usuarios  @relation(fields: [usuario_id], references: [id])
-  pedidos        pedidos[]
+  id                  Int       @id @default(autoincrement())
+  usuario_id          Int
+  alias               String    @db.VarChar(50)
+  direccion           String    @db.Text
+  ciudad              String    @db.VarChar(100)
+  estado              String    @db.VarChar(100)
+  codigo_postal       String    @db.VarChar(20)
+  pais                String    @default("España") @db.VarChar(100)
+  numero_casa         String?   @db.VarChar(50)
+  numero_departamento String?   @db.VarChar(50)
+  especificaciones    String?   @db.Text
+  predeterminada      Boolean   @default(false)
+  usuario             usuarios  @relation(fields: [usuario_id], references: [id])
+  pedidos             pedidos[]
 
   @@index([usuario_id], map: "direcciones_usuario_id_fkey")
 }

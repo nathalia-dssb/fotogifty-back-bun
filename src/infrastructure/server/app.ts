@@ -1,5 +1,7 @@
 import express from 'express';
 import cors from 'cors';
+// import helmet from 'helmet'; // Descomentar cuando se instale helmet
+// import rateLimit from 'express-rate-limit'; // Descomentar cuando se instale express-rate-limit
 import { setupSwagger } from '../config/swagger.setup';
 import configureRoutes from '../routes';
 

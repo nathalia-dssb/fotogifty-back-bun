@@ -77,6 +77,46 @@ export class PrismaUsuarioRepository implements UsuarioRepositoryPort {
     }
   }
 
+  async updatePassword(id: number, hashedPassword: string): Promise<Usuario | null> {
+    try {
+      const updated = await prisma.usuarios.update({
+        where: { id },
+        data: { password_hash: hashedPassword }
+      });
+      return this.toDomain(updated);
+    } catch (error) {
+      console.error('Error updating password:', error);
+      return null;
+    }
+  }
+
+  async updateLastLogin(id: number): Promise<void> {
+    try {
+      await prisma.usuarios.update({
+        where: { id },
+        data: { fecha_ultima_conexion: new Date() }
+      });
+    } catch (error) {
+      console.error('Error updating last login:', error);
+      // No lanzamos error ya que no es crítico para el inicio de sesión
+    }
+  }
+
+  async updateRecoveryToken(id: number, token: string, expiration: Date): Promise<void> {
+    try {
+      await prisma.usuarios.update({
+        where: { id },
+        data: {
+          token_recuperacion: token,
+          fecha_expiracion_token: expiration
+        }
+      });
+    } catch (error) {
+      console.error('Error updating recovery token:', error);
+      throw error;
+    }
+  }
+
   private toDomain(prismaUsuario: any): Usuario {
     // Determinar el tipo de usuario basado en las relaciones con las tablas administradores y stores
     let tipoUsuario: TipoUsuario | undefined;
@@ -99,8 +139,10 @@ export class PrismaUsuarioRepository implements UsuarioRepositoryPort {
       telefono: prismaUsuario.telefono,
       fecha_registro: prismaUsuario.fecha_registro,
       activo: prismaUsuario.activo,
-      tipo: tipoUsuario
-
+      tipo: tipoUsuario,
+      fecha_ultima_conexion: prismaUsuario.fecha_ultima_conexion,
+      token_recuperacion: prismaUsuario.token_recuperacion,
+      fecha_expiracion_token: prismaUsuario.fecha_expiracion_token
     };
   }
 
@@ -111,7 +153,10 @@ export class PrismaUsuarioRepository implements UsuarioRepositoryPort {
       nombre: usuario.nombre,
       apellido: usuario.apellido,
       telefono: usuario.telefono,
-      activo: usuario.activo
+      activo: usuario.activo,
+      fecha_ultima_conexion: usuario.fecha_ultima_conexion,
+      token_recuperacion: usuario.token_recuperacion,
+      fecha_expiracion_token: usuario.fecha_expiracion_token
     };
   }
 }

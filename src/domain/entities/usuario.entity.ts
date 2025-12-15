@@ -10,6 +10,9 @@ export interface Usuario {
   fecha_registro?: Date;
   activo?: boolean;
   tipo?: TipoUsuario;
+  fecha_ultima_conexion?: Date;
+  token_recuperacion?: string;
+  fecha_expiracion_token?: Date;
 }
 
 export class UsuarioEntity implements Usuario {
@@ -30,7 +33,10 @@ export class UsuarioEntity implements Usuario {
     apellido: string,
     tipo?: TipoUsuario,
     telefono?: string,
-    id?: number
+    id?: number,
+    fecha_ultima_conexion?: Date,
+    token_recuperacion?: string,
+    fecha_expiracion_token?: Date
   ) {
     this.id = id;
     this.email = email;
@@ -41,6 +47,9 @@ export class UsuarioEntity implements Usuario {
     this.fecha_registro = new Date();
     this.activo = true;
     this.tipo = tipo;
+    this.fecha_ultima_conexion = fecha_ultima_conexion;
+    this.token_recuperacion = token_recuperacion;
+    this.fecha_expiracion_token = fecha_expiracion_token;
   }
 
   static create(
@@ -49,8 +58,22 @@ export class UsuarioEntity implements Usuario {
     nombre: string,
     apellido: string,
     tipo?: TipoUsuario,
-    telefono?: string
+    telefono?: string,
+    fecha_ultima_conexion?: Date,
+    token_recuperacion?: string,
+    fecha_expiracion_token?: Date
   ): UsuarioEntity {
-    return new UsuarioEntity(email, password_hash, nombre, apellido, tipo, telefono);
+    return new UsuarioEntity(
+      email,
+      password_hash,
+      nombre,
+      apellido,
+      tipo,
+      telefono,
+      undefined, // id es opcional
+      fecha_ultima_conexion,
+      token_recuperacion,
+      fecha_expiracion_token
+    );
   }
 }

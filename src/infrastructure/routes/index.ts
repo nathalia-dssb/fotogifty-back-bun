@@ -9,6 +9,7 @@ import authRoutes from './auth.routes';
 import categoriaRoutes from './categoria.routes';
 import storeRoutes from './store.routes';
 import pedidoRoutes from './pedido.routes';
+import direccionRoutes from './direccion.routes';
 
 const configureRoutes = (): Router => {
   const router = Router();
@@ -27,6 +28,7 @@ const configureRoutes = (): Router => {
   categoriaRoutes(apiRouter);
   storeRoutes(apiRouter);
   pedidoRoutes(apiRouter);
+  direccionRoutes(apiRouter);
   router.use('/api', apiRouter);
 
   return router;

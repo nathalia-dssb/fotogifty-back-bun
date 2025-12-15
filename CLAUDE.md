@@ -91,12 +91,12 @@ The application has a special user type system where the base `usuarios` table i
 - **CLIENTE**: Base user (default)
 - **ADMIN**: User with `administradores` relation (nivel_acceso: 1)
 - **SUPER_ADMIN**: User with `administradores` relation (nivel_acceso: 2)
-- **VENDEDOR_VENTANILLA**: User with `vendedores_ventanilla` relation
+- **VENDEDOR_VENTANILLA**: User with `stores` relation (codigo_empleado)
 
 When creating users through repositories:
 - The user type is determined by checking related tables during reads
 - Creating ADMIN/SUPER_ADMIN automatically creates an `administradores` record
-- Creating VENDEDOR_VENTANILLA automatically creates a `vendedores_ventanilla` record
+- Creating VENDEDOR_VENTANILLA automatically creates a `stores` record
 
 ## Database Schema
 
@@ -108,8 +108,11 @@ Key tables:
 - `pedidos`: Orders (with Stripe integration fields)
 - `items_pedido`: Order line items
 - `fotos`: Uploaded photos (stored in S3)
-- `administradores`: Admin users (extends usuarios)
-- `vendedores_ventanilla`: Window seller users (extends usuarios)
+- `administradores`: Admin users (extends usuarios with nivel_acceso)
+- `stores`: Window seller users (extends usuarios with codigo_empleado)
+- `tipo_paquete`: Package type definitions
+- `estados_pedido`: Order status definitions
+- `calendario_fotos`: Calendar photos mapping (for photo calendar products)
 
 ## Environment Configuration
 
@@ -118,6 +121,8 @@ Required `.env` variables:
 - `AWS_REGION`, `AWS_ACCESS_KEY_ID`, `AWS_SECRET_ACCESS_KEY`: AWS credentials
 - `S3_BUCKET_NAME`: S3 bucket for photo storage
 - `PORT`: Server port (default: 3001)
+- `JWT_SECRET`: Secret key for JWT token generation (defaults to 'default_secret_key_for_dev' if not set)
+- `JWT_EXPIRES_IN`: Token expiration time (default: '24h', supports formats like '1h', '7d', '60m')
 
 ## API Documentation
 
@@ -146,7 +151,14 @@ Routes are configured in `infrastructure/routes/index.ts` which imports individu
 
 3. **File uploads**: Use Multer middleware, then S3Service for storage (`infrastructure/services/s3.service.ts`)
 
-4. **Authentication**: Password hashing uses bcrypt. Check `crear-usuario.use-case.ts` and `login.use-case.ts` for patterns.
+4. **Authentication and Authorization**:
+   - Password hashing: Uses `PasswordService` (bcrypt) in `infrastructure/services/password.service.ts`
+   - Token generation: Uses `TokenService` (JWT) in `infrastructure/services/token.service.ts`
+   - Authentication patterns: Check `crear-usuario.use-case.ts` and `login.use-case.ts`
+   - Route protection: Use middleware from `infrastructure/middlewares/auth.middleware.ts`:
+     - `authenticateToken`: Verifies JWT and attaches user to request
+     - `requireRole(...roles)`: Requires specific user roles
+     - `requireAdmin`, `requireSuperAdmin`, `requireVendedor`, `requireCliente`: Role-specific shortcuts
 
 ## TypeScript Configuration
 

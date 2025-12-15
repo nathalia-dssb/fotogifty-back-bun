@@ -2,6 +2,7 @@ import { Router } from 'express';
 import { AuthController } from '../controllers/auth.controller';
 import { LoginUseCase } from '../../application/use-cases/login.use-case';
 import { PrismaUsuarioRepository } from '../repositories/prisma-usuario.repository';
+import { authenticateToken } from '../middlewares/auth.middleware';
 
 /**
  * @swagger
@@ -53,7 +54,18 @@ const authRoutes = (router: Router): void => {
    *                 message:
    *                   type: string
    *                 data:
-   *                   $ref: '#/components/schemas/UsuarioResponse'
+   *                   type: object
+   *                   properties:
+   *                     user:
+   *                       $ref: '#/components/schemas/UsuarioResponse'
+   *                     token:
+   *                       type: string
+   *                       description: Token JWT para autenticación
+   *                       example: "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZCI6MSwiZW1haWwiOiJ1c3VhcmlvQGVqZW1wbG8uY29tIiwidGlwbyI6ImNsaWVudGUiLCJpYXQiOjE1MTYyMzkwMjIsImV4cCI6MTUxNjIzOTAyMn0.SflKxwRJSMeKKF2QT4fwpMeJf36POk6yJV_adQssw5c"
+   *                     expiresIn:
+   *                       type: number
+   *                       description: Tiempo de expiración del token en segundos
+   *                       example: 86400
    *       400:
    *         description: Datos de entrada inválidos
    *       401:
@@ -61,7 +73,7 @@ const authRoutes = (router: Router): void => {
    *       500:
    *         description: Error interno del servidor
    */
-  router.post('/auth/login/cliente', (req, res) => 
+  router.post('/auth/login/cliente', (req, res) =>
     authController.loginCliente(req, res)
   );
 
@@ -104,7 +116,18 @@ const authRoutes = (router: Router): void => {
    *                 message:
    *                   type: string
    *                 data:
-   *                   $ref: '#/components/schemas/UsuarioResponse'
+   *                   type: object
+   *                   properties:
+   *                     user:
+   *                       $ref: '#/components/schemas/UsuarioResponse'
+   *                     token:
+   *                       type: string
+   *                       description: Token JWT para autenticación
+   *                       example: "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZCI6MSwiZW1haWwiOiJhZG1pbkBhamVtcGxvLmNvbSIsInR5cG8iOiJhZG1pbiIsImlhdCI6MTUxNjIzOTAyMiwiZXhwIjoxNTE2MjM5MDIyfQ.SflKxwRJSMeKKF2QT4fwpMeJf36POk6yJV_adQssw5c"
+   *                     expiresIn:
+   *                       type: number
+   *                       description: Tiempo de expiración del token en segundos
+   *                       example: 86400
    *       400:
    *         description: Datos de entrada inválidos
    *       401:
@@ -112,7 +135,36 @@ const authRoutes = (router: Router): void => {
    *       500:
    *         description: Error interno del servidor
    */
-  router.post('/auth/login/admin', (req, res) => 
+  /**
+   * @swagger
+   * /api/auth/me:
+   *   get:
+   *     summary: Obtener información del usuario autenticado
+   *     tags: [Autenticación]
+   *     security:
+   *       - bearerAuth: []
+   *     responses:
+   *       200:
+   *         description: Información del usuario obtenida exitosamente
+   *         content:
+   *           application/json:
+   *             schema:
+   *               type: object
+   *               properties:
+   *                 success:
+   *                   type: boolean
+   *                 data:
+   *                   $ref: '#/components/schemas/UsuarioResponse'
+   *       401:
+   *         description: Acceso no autorizado
+   *       500:
+   *         description: Error interno del servidor
+   */
+  router.get('/auth/me', authenticateToken, (req, res) =>
+    authController.getMe(req, res)
+  );
+
+  router.post('/auth/login/admin', (req, res) =>
     authController.loginAdmin(req, res)
   );
 };

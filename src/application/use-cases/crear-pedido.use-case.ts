@@ -92,9 +92,9 @@ export class CrearPedidoUseCase {
       // Crear la entidad de pedido
       const nuevoPedido = PedidoEntity.create(
         id_usuario,
+        (direccion_envio as any).id, // Extraer el ID de la dirección
         nombre_cliente,
         email_cliente,
-        direccion_envio,
         items_pedido,
         subtotal,
         iva,

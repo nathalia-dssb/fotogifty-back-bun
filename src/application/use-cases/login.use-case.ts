@@ -1,6 +1,6 @@
 import { UsuarioRepositoryPort } from '../../domain/ports/usuario.repository.port';
 import { TipoUsuario, UsuarioConTipo } from '../../domain/entities/tipo-usuario.entity';
-import bcrypt from 'bcrypt';
+import { PasswordService } from '../../infrastructure/services/password.service';
 
 interface LoginResult {
   success: boolean;
@@ -41,8 +41,8 @@ export class LoginUseCase {
       }
 
       // Verificar la contraseña
-      const isPasswordValid = await bcrypt.compare(password, usuario.password_hash);
-      
+      const isPasswordValid = await PasswordService.verifyPassword(password, usuario.password_hash);
+
       if (!isPasswordValid) {
         return {
           success: false,
@@ -50,9 +50,18 @@ export class LoginUseCase {
         };
       }
 
+      // Actualizar la fecha de última conexión
+      await this.usuarioRepository.updateLastLogin(usuario.id!);
+
+      // Actualizar localmente la fecha de última conexión para devolverla en la respuesta
+      const usuarioConUltimaConexion = {
+        ...usuario,
+        fecha_ultima_conexion: new Date()
+      };
+
       // Devolver el usuario sin la contraseña
-      const { password_hash, ...usuarioSinPassword } = usuario;
-      
+      const { password_hash, ...usuarioSinPassword } = usuarioConUltimaConexion;
+
       return {
         success: true,
         usuario: {

@@ -19,9 +19,9 @@ export class PedidoController {
     try {
       const {
         id_usuario,
+        id_direccion,
         nombre_cliente,
         email_cliente,
-        direccion_envio,
         items_pedido,
         subtotal,
         iva,
@@ -32,10 +32,19 @@ export class PedidoController {
       } = req.body;
 
       // Validar que los campos requeridos estén presentes
-      if (!nombre_cliente || !email_cliente || !direccion_envio || !items_pedido || !Array.isArray(items_pedido) || items_pedido.length === 0 || subtotal === undefined || iva === undefined || total === undefined) {
+      if (!nombre_cliente || !email_cliente || !id_direccion || !items_pedido || !Array.isArray(items_pedido) || items_pedido.length === 0 || subtotal === undefined || iva === undefined || total === undefined) {
         res.status(400).json({
           success: false,
-          message: 'Nombre, email, dirección de envío, items del pedido, subtotal, IVA y total son requeridos'
+          message: 'Nombre, email, ID de dirección, items del pedido, subtotal, IVA y total son requeridos'
+        });
+        return;
+      }
+
+      // Validar que id_direccion sea un número
+      if (typeof id_direccion !== 'number' || id_direccion <= 0) {
+        res.status(400).json({
+          success: false,
+          message: 'ID de dirección inválido'
         });
         return;
       }
@@ -43,9 +52,9 @@ export class PedidoController {
       // Ejecutar el caso de uso
       const result = await this.crearPedidoUseCase.execute(
         id_usuario,
+        id_direccion,
         nombre_cliente,
         email_cliente,
-        direccion_envio,
         items_pedido,
         subtotal,
         iva,

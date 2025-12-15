@@ -3,7 +3,7 @@ import { CrearUsuarioUseCase } from '../../application/use-cases/crear-usuario.u
 import { UsuarioRepositoryPort } from '../../domain/ports/usuario.repository.port';
 import { UsuarioEntity } from '../../domain/entities/usuario.entity';
 import { TipoUsuario } from '../../domain/entities/tipo-usuario.entity';
-import bcrypt from 'bcrypt';
+import { PasswordService } from '../services/password.service';
 
 export class UsuarioController {
   constructor(
@@ -43,8 +43,7 @@ export class UsuarioController {
       }
 
       // Hashear la contraseña
-      const saltRounds = 10;
-      const password_hash = await bcrypt.hash(password, saltRounds);
+      const password_hash = await PasswordService.hashPassword(password);
 
       // Crear usuario con tipo cliente por defecto
       const nuevoUsuario = UsuarioEntity.create(
@@ -52,9 +51,9 @@ export class UsuarioController {
         password_hash,
         nombre,
         apellido,
+        TipoUsuario.CLIENTE,
         telefono
       );
-      nuevoUsuario.tipo = TipoUsuario.CLIENTE;
 
       const result = await this.crearUsuarioUseCase.execute(nuevoUsuario);
 
@@ -73,6 +72,264 @@ export class UsuarioController {
       }
     } catch (error: any) {
       console.error('Error creating user:', error);
+      res.status(500).json({
+        success: false,
+        message: 'Error interno del servidor'
+      });
+    }
+  }
+
+  async getUsuarioById(req: Request, res: Response): Promise<void> {
+    try {
+      const { id } = req.params;
+      const usuarioId = parseInt(id);
+      const tokenUserId = req.user?.id; // ID del usuario autenticado desde el token
+
+      if (isNaN(usuarioId)) {
+        res.status(400).json({
+          success: false,
+          message: 'ID de usuario inválido'
+        });
+        return;
+      }
+
+      // Verificar que el usuario autenticado solo pueda acceder a su propio perfil
+      // a menos que sea administrador
+      const esAdmin = req.user?.tipo === 'admin' || req.user?.tipo === 'super_admin';
+      if (tokenUserId !== usuarioId && !esAdmin) {
+        res.status(403).json({
+          success: false,
+          message: 'Acceso denegado. Solo puedes acceder a tu propio perfil.'
+        });
+        return;
+      }
+
+      const usuario = await this.usuarioRepository.findById(usuarioId);
+
+      if (!usuario) {
+        res.status(404).json({
+          success: false,
+          message: 'Usuario no encontrado'
+        });
+        return;
+      }
+
+      // No devolver la contraseña hasheada en la respuesta
+      const { password_hash: _, ...usuarioSinPassword } = usuario;
+
+      res.status(200).json({
+        success: true,
+        data: usuarioSinPassword
+      });
+    } catch (error: any) {
+      console.error('Error obteniendo usuario por ID:', error);
+      res.status(500).json({
+        success: false,
+        message: 'Error interno del servidor'
+      });
+    }
+  }
+
+  async updateUsuario(req: Request, res: Response): Promise<void> {
+    try {
+      const { id } = req.params;
+      const usuarioId = parseInt(id);
+      const tokenUserId = req.user?.id; // ID del usuario autenticado desde el token
+      const { nombre, apellido, telefono, activo } = req.body;
+
+      if (isNaN(usuarioId)) {
+        res.status(400).json({
+          success: false,
+          message: 'ID de usuario inválido'
+        });
+        return;
+      }
+
+      // Verificar que el usuario autenticado solo pueda actualizar su propio perfil
+      // a menos que sea administrador
+      const esAdmin = req.user?.tipo === 'admin' || req.user?.tipo === 'super_admin';
+      if (tokenUserId !== usuarioId && !esAdmin) {
+        res.status(403).json({
+          success: false,
+          message: 'Acceso denegado. Solo puedes actualizar tu propio perfil.'
+        });
+        return;
+      }
+
+      // Verificar que el usuario existe
+      const usuarioExistente = await this.usuarioRepository.findById(usuarioId);
+      if (!usuarioExistente) {
+        res.status(404).json({
+          success: false,
+          message: 'Usuario no encontrado'
+        });
+        return;
+      }
+
+      // Validaciones
+      if (nombre && typeof nombre !== 'string') {
+        res.status(400).json({
+          success: false,
+          message: 'Nombre debe ser una cadena de texto'
+        });
+        return;
+      }
+
+      if (apellido && typeof apellido !== 'string') {
+        res.status(400).json({
+          success: false,
+          message: 'Apellido debe ser una cadena de texto'
+        });
+        return;
+      }
+
+      if (telefono && typeof telefono !== 'string') {
+        res.status(400).json({
+          success: false,
+          message: 'Teléfono debe ser una cadena de texto'
+        });
+        return;
+      }
+
+      if (activo !== undefined && typeof activo !== 'boolean') {
+        res.status(400).json({
+          success: false,
+          message: 'Activo debe ser un valor booleano'
+        });
+        return;
+      }
+
+      // No permitir actualizar ciertos campos como tipo o id
+      if (req.body.tipo !== undefined) {
+        res.status(400).json({
+          success: false,
+          message: 'No puedes cambiar el tipo de usuario'
+        });
+        return;
+      }
+
+      if (req.body.id !== undefined) {
+        res.status(400).json({
+          success: false,
+          message: 'No puedes cambiar el ID del usuario'
+        });
+        return;
+      }
+
+      // Actualizar solo los campos proporcionados
+      const usuarioActualizado: any = {
+        ...usuarioExistente
+      };
+
+      if (nombre) usuarioActualizado.nombre = nombre;
+      if (apellido) usuarioActualizado.apellido = apellido;
+      if (telefono) usuarioActualizado.telefono = telefono;
+      if (activo !== undefined) usuarioActualizado.activo = activo;
+
+      // Guardar el usuario actualizado
+      const result = await this.usuarioRepository.save(usuarioActualizado);
+
+      // No devolver la contraseña hasheada en la respuesta
+      const { password_hash: _, ...usuarioSinPassword } = result;
+
+      res.status(200).json({
+        success: true,
+        data: usuarioSinPassword,
+        message: 'Usuario actualizado exitosamente'
+      });
+    } catch (error: any) {
+      console.error('Error actualizando usuario:', error);
+      res.status(500).json({
+        success: false,
+        message: 'Error interno del servidor'
+      });
+    }
+  }
+
+  async changePassword(req: Request, res: Response): Promise<void> {
+    try {
+      const { id } = req.params;
+      const usuarioId = parseInt(id);
+      const tokenUserId = req.user?.id; // ID del usuario autenticado desde el token
+      const { currentPassword, newPassword } = req.body;
+
+      if (isNaN(usuarioId)) {
+        res.status(400).json({
+          success: false,
+          message: 'ID de usuario inválido'
+        });
+        return;
+      }
+
+      // Verificar que el usuario autenticado solo pueda cambiar su propia contraseña
+      // a menos que sea administrador
+      const esAdmin = req.user?.tipo === 'admin' || req.user?.tipo === 'super_admin';
+      if (tokenUserId !== usuarioId && !esAdmin) {
+        res.status(403).json({
+          success: false,
+          message: 'Acceso denegado. Solo puedes cambiar tu propia contraseña.'
+        });
+        return;
+      }
+
+      if (!currentPassword || !newPassword) {
+        res.status(400).json({
+          success: false,
+          message: 'Contraseña actual y nueva contraseña son requeridas'
+        });
+        return;
+      }
+
+      if (newPassword.length < 6) {
+        res.status(400).json({
+          success: false,
+          message: 'La nueva contraseña debe tener al menos 6 caracteres'
+        });
+        return;
+      }
+
+      // Verificar que el usuario existe
+      const usuario = await this.usuarioRepository.findById(usuarioId);
+      if (!usuario) {
+        res.status(404).json({
+          success: false,
+          message: 'Usuario no encontrado'
+        });
+        return;
+      }
+
+      // Verificar la contraseña actual
+      const isCurrentPasswordValid = await bcrypt.compare(currentPassword, usuario.password_hash);
+      if (!isCurrentPasswordValid) {
+        res.status(401).json({
+          success: false,
+          message: 'Contraseña actual incorrecta'
+        });
+        return;
+      }
+
+      // Hashear la nueva contraseña
+      const saltRounds = 10;
+      const newPasswordHash = await bcrypt.hash(newPassword, saltRounds);
+
+      // Actualizar la contraseña
+      const usuarioConNuevaContrasena = {
+        ...usuario,
+        password_hash: newPasswordHash
+      };
+
+      const result = await this.usuarioRepository.save(usuarioConNuevaContrasena);
+
+      // No devolver la contraseña hasheada en la respuesta
+      const { password_hash: _, ...usuarioSinPassword } = result;
+
+      res.status(200).json({
+        success: true,
+        data: usuarioSinPassword,
+        message: 'Contraseña actualizada exitosamente'
+      });
+    } catch (error: any) {
+      console.error('Error cambiando contraseña:', error);
       res.status(500).json({
         success: false,
         message: 'Error interno del servidor'
