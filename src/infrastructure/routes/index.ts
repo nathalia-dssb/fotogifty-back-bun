@@ -10,6 +10,8 @@ import categoriaRoutes from './categoria.routes';
 import storeRoutes from './store.routes';
 import pedidoRoutes from './pedido.routes';
 import direccionRoutes from './direccion.routes';
+import checkoutRoutes from './checkout.routes';
+import webhookRoutes from './webhook.routes';
 
 const configureRoutes = (): Router => {
   const router = Router();
@@ -29,6 +31,8 @@ const configureRoutes = (): Router => {
   storeRoutes(apiRouter);
   pedidoRoutes(apiRouter);
   direccionRoutes(apiRouter);
+  checkoutRoutes(apiRouter);
+  webhookRoutes(apiRouter);
   router.use('/api', apiRouter);
 
   return router;

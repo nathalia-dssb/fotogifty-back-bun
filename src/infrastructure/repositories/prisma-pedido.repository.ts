@@ -79,12 +79,15 @@ export class PrismaPedidoRepository implements PedidoRepositoryPort {
         estado_id: 1, // Valor por defecto
         items: {
           create: pedido.items_pedido.map(item => ({
+            tipo_item: 'paquete',
             paquete_id: item.id_paquete,
             nombre_paquete: item.nombre_paquete,
             categoria_paquete: item.categoria_paquete,
             precio_unitario: item.precio_unitario,
             cantidad: item.cantidad,
-            num_fotos_requeridas: item.num_fotos_requeridas
+            cantidad_fotos: item.num_fotos_requeridas,
+            num_fotos_requeridas: item.num_fotos_requeridas,
+            subtotal: item.precio_unitario * item.cantidad
           }))
         }
       },
@@ -213,6 +216,7 @@ export class PrismaPedidoRepository implements PedidoRepositoryPort {
   private toDomain(prismaPedido: any): Pedido {
     return {
       id: prismaPedido.id,
+      orderId: prismaPedido.id, // Alias para compatibilidad con frontend
       id_usuario: prismaPedido.usuario_id,
       id_pago_stripe: prismaPedido.id_pago_stripe,
       id_sesion_stripe: prismaPedido.id_sesion_stripe,
@@ -228,6 +232,7 @@ export class PrismaPedidoRepository implements PedidoRepositoryPort {
       },
       fecha_pedido: prismaPedido.fecha_pedido,
       items_pedido: prismaPedido.items.map((item: any) => ({
+        id: item.id,
         id_paquete: item.paquete_id,
         nombre_paquete: item.nombre_paquete,
         categoria_paquete: item.categoria_paquete,

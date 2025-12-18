@@ -19,6 +19,12 @@ export class App {
 
   private initializeMiddlewares(): void {
     this.app.use(cors());
+
+    // Webhook de Stripe necesita el raw body para verificar la firma
+    // Debe ir ANTES de express.json()
+    this.app.use('/api/webhooks/stripe', express.raw({ type: 'application/json' }));
+
+    // Para todas las demás rutas, parsear JSON normalmente
     this.app.use(express.json());
   }
 

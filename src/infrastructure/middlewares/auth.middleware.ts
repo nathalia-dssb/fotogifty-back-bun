@@ -20,10 +20,12 @@ export interface TokenPayload {
 
 export const authenticateToken = (req: Request, res: Response, next: NextFunction) => {
   try {
+    console.log('=== authenticateToken middleware ===');
     const authHeader = req.headers['authorization'];
     const token = authHeader && authHeader.split(' ')[1]; // Bearer TOKEN
 
     if (!token) {
+      console.log('No token provided');
       return res.status(401).json({
         success: false,
         message: 'Acceso denegado. No se proporcionó token de autenticación'
@@ -31,32 +33,34 @@ export const authenticateToken = (req: Request, res: Response, next: NextFunctio
     }
 
     const secret = process.env.JWT_SECRET || 'default_secret_key_for_dev';
-    
+
     const decoded = jwt.verify(token, secret) as TokenPayload;
-    
+    console.log('Token decoded successfully:', { id: decoded.id, email: decoded.email, tipo: decoded.tipo });
+
     // Añadir la información del usuario al objeto de solicitud
     req.user = {
       id: decoded.id,
       email: decoded.email,
       tipo: decoded.tipo as any
     };
-    
+
     next();
   } catch (error: any) {
+    console.log('Auth error:', error.name, error.message);
     if (error.name === 'TokenExpiredError') {
       return res.status(401).json({
         success: false,
         message: 'Token expirado'
       });
     }
-    
+
     if (error.name === 'JsonWebTokenError') {
       return res.status(403).json({
         success: false,
         message: 'Token inválido'
       });
     }
-    
+
     return res.status(500).json({
       success: false,
       message: 'Error en la verificación del token'

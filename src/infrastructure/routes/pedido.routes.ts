@@ -9,6 +9,7 @@ import { PrismaPaqueteRepository } from '../repositories/prisma-paquete.reposito
 import { SubirFotoUseCase } from '../../application/use-cases/subir-foto.use-case';
 import { S3Service } from '../services/s3.service';
 import { PrismaFotoRepository } from '../repositories/prisma-foto.repository';
+import { PrismaItemsPedidoRepository } from '../repositories/prisma-items-pedido.repository';
 import { authenticateToken, requireRole, requireCliente, requireAdmin } from '../middlewares/auth.middleware';
 
 // Configurar multer para memoria
@@ -28,7 +29,10 @@ const upload = multer({
 
 // Middleware para manejar errores de Multer
 const handleMulterError = (err: any, req: any, res: any, next: any) => {
+  console.log('=== handleMulterError ===');
+  console.log('Error:', err);
   if (err instanceof multer.MulterError) {
+    console.log('MulterError code:', err.code, 'field:', err.field);
     if (err.code === 'LIMIT_FILE_SIZE') {
       return res.status(400).json({
         success: false,
@@ -52,6 +56,7 @@ const handleMulterError = (err: any, req: any, res: any, next: any) => {
       error: `Error en la carga del archivo: ${err.code}`
     });
   } else if (err) {
+    console.log('Other error:', err.message);
     if (err.message.includes('Solo se permiten archivos de imagen')) {
       return res.status(400).json({
         success: false,
@@ -71,10 +76,11 @@ const pedidoRoutes = (router: Router): void => {
   const usuarioRepository = new PrismaUsuarioRepository();
   const paqueteRepository = new PrismaPaqueteRepository();
   const fotoRepository = new PrismaFotoRepository();
+  const itemsPedidoRepository = new PrismaItemsPedidoRepository();
   const s3Service = new S3Service();
   const crearPedidoUseCase = new CrearPedidoUseCase(pedidoRepository, usuarioRepository, paqueteRepository);
   const actualizarEstadoPedidoUseCase = new ActualizarEstadoPedidoUseCase(pedidoRepository);
-  const subirFotoUseCase = new SubirFotoUseCase(s3Service, usuarioRepository, fotoRepository);
+  const subirFotoUseCase = new SubirFotoUseCase(s3Service, usuarioRepository, pedidoRepository, itemsPedidoRepository, paqueteRepository, fotoRepository);
   const pedidoController = new PedidoController(crearPedidoUseCase, actualizarEstadoPedidoUseCase, pedidoRepository, usuarioRepository, paqueteRepository);
 
   /**
@@ -457,24 +463,81 @@ const pedidoRoutes = (router: Router): void => {
    *       500:
    *         description: Error interno del servidor
    */
-  router.post('/pedidos/:id/imagenes', authenticateToken, upload.single('foto'), handleMulterError, (req, res) => {
-    // Este endpoint delega a la funcionalidad existente para subir fotos
-    // pero asegurando que se relacionen correctamente con el pedido
-    const pedidoId = parseInt(req.params.id);
+  router.post('/pedidos/:id/imagenes', (req, res, next) => {
+    console.log('=== DEBUG /pedidos/:id/imagenes ===');
+    console.log('Headers:', JSON.stringify(req.headers, null, 2));
+    console.log('Params:', req.params);
+    next();
+  }, authenticateToken, upload.array('imagenes', 20), handleMulterError, async (req, res) => {
+    try {
+      console.log('=== Después de autenticación y multer ===');
+      console.log('Body:', req.body);
+      console.log('Files:', req.files ? (req.files as Express.Multer.File[]).length : 0);
+      console.log('User:', (req as any).user);
+      const pedidoId = parseInt(req.params.id);
 
-    // Vamos a reutilizar el controlador de fotos existente
-    // pero con valores predeterminados para los campos requeridos
-    if (!req.body.usuarioId) req.body.usuarioId = req.body.usuarioId || 1; // Valor por defecto
-    if (!req.body.itemPedidoId) req.body.itemPedidoId = req.body.itemPedidoId || 1; // Valor por defecto
-    req.body.pedidoId = pedidoId;
+      // Validar que se recibieron archivos
+      const files = req.files as Express.Multer.File[];
+      if (!files || files.length === 0) {
+        return res.status(400).json({
+          success: false,
+          error: 'No se proporcionaron archivos. Asegúrate de enviar los archivos con el nombre "imagenes".'
+        });
+      }
 
-    // Llamar directamente al controlador de fotos
-    // Necesitamos tener acceso al controlador de fotos
-    // para implementar completamente esta funcionalidad
-    res.status(501).json({
-      success: false,
-      message: 'Funcionalidad en desarrollo. Utilice /api/fotos/upload directamente'
-    });
+      // Obtener usuarioId del token JWT o del body
+      const usuarioId = (req as any).user?.id || parseInt(req.body.usuarioId);
+      let itemPedidoId = req.body.itemPedidoId ? parseInt(req.body.itemPedidoId) : null;
+
+      if (!usuarioId) {
+        return res.status(400).json({
+          success: false,
+          error: 'usuarioId es requerido'
+        });
+      }
+
+      // Si no se proporciona itemPedidoId, obtener el primer item del pedido
+      if (!itemPedidoId) {
+        const items = await itemsPedidoRepository.findByPedidoId(pedidoId);
+        if (!items || items.length === 0) {
+          return res.status(400).json({
+            success: false,
+            error: 'No se encontraron items para este pedido'
+          });
+        }
+        itemPedidoId = items[0].id!;
+        console.log('itemPedidoId obtenido automáticamente:', itemPedidoId);
+      }
+
+      // Subir todas las imágenes
+      const fotosSubidas = [];
+      for (const file of files) {
+        const foto = await subirFotoUseCase.execute({
+          file,
+          usuarioId,
+          pedidoId,
+          itemPedidoId
+        });
+        fotosSubidas.push({
+          id: foto.id,
+          url: foto.ruta_almacenamiento,
+          filename: foto.nombre_archivo,
+          size: foto.tamaño_archivo,
+          fecha_subida: foto.fecha_subida
+        });
+      }
+
+      res.status(200).json({
+        success: true,
+        data: fotosSubidas
+      });
+    } catch (error: any) {
+      console.error('Error subiendo imagen al pedido:', error);
+      res.status(500).json({
+        success: false,
+        error: error.message || 'Error interno del servidor'
+      });
+    }
   });
 };
 
