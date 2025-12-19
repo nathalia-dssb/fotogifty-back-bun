@@ -41,7 +41,7 @@ export class LoginUseCase {
       }
 
       // Para login de vendedor de ventanilla (store)
-      if (tipoSolicitado === 'vendedor_ventanilla' && usuario.tipo !== TipoUsuario.VENDEDOR_VENTANILLA) {
+      if (tipoSolicitado === 'store' && usuario.tipo !== TipoUsuario.STORE) {
         return {
           success: false,
           message: 'Credenciales inválidas'

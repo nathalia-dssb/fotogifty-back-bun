@@ -191,7 +191,7 @@ export class UsuarioController {
         password_hash,
         nombre,
         apellido,
-        TipoUsuario.VENDEDOR_VENTANILLA,
+        TipoUsuario.STORE,
         telefono
       );
 

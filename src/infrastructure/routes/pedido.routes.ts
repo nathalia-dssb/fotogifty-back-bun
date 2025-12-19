@@ -211,7 +211,7 @@ const pedidoRoutes = (router: Router): void => {
    * @swagger
    * /api/pedidos:
    *   get:
-   *     summary: Obtener todos los pedidos (solo para administradores)
+   *     summary: Obtener todos los pedidos (para administradores y vendedores)
    *     tags: [Pedidos]
    *     security:
    *       - bearerAuth: []
@@ -234,7 +234,7 @@ const pedidoRoutes = (router: Router): void => {
    *       500:
    *         description: Error interno del servidor
    */
-  router.get('/pedidos', authenticateToken, requireAdmin, (req, res) =>
+  router.get('/pedidos', authenticateToken, requireRole('admin', 'super_admin', 'store'), (req, res) =>
     pedidoController.getAllPedidos(req, res)
   );
 
@@ -324,7 +324,7 @@ const pedidoRoutes = (router: Router): void => {
    * @swagger
    * /api/pedidos/estado/{estado}:
    *   get:
-   *     summary: Obtener pedidos por estado (solo para administradores)
+   *     summary: Obtener pedidos por estado (para administradores y vendedores)
    *     tags: [Pedidos]
    *     parameters:
    *       - in: path
@@ -357,7 +357,7 @@ const pedidoRoutes = (router: Router): void => {
    *       500:
    *         description: Error interno del servidor
    */
-  router.get('/pedidos/estado/:estado', authenticateToken, requireAdmin, (req, res) =>
+  router.get('/pedidos/estado/:estado', authenticateToken, requireRole('admin', 'super_admin', 'store'), (req, res) =>
     pedidoController.getPedidosByEstado(req, res)
   );
 
@@ -365,7 +365,7 @@ const pedidoRoutes = (router: Router): void => {
    * @swagger
    * /api/pedidos/{id}/estado:
    *   patch:
-   *     summary: Actualizar el estado de un pedido (solo para administradores)
+   *     summary: Actualizar el estado de un pedido (para administradores y vendedores)
    *     tags: [Pedidos]
    *     parameters:
    *       - in: path
@@ -411,7 +411,7 @@ const pedidoRoutes = (router: Router): void => {
    *       500:
    *         description: Error interno del servidor
    */
-  router.patch('/pedidos/:id/estado', authenticateToken, requireAdmin, (req, res) =>
+  router.patch('/pedidos/:id/estado', authenticateToken, requireRole('admin', 'super_admin', 'store'), (req, res) =>
     pedidoController.updateEstadoPedido(req, res)
   );
 

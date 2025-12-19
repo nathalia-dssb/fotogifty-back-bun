@@ -106,5 +106,5 @@ export const requireSuperAdmin = (req: Request, res: Response, next: NextFunctio
 
 // Middleware para verificar que el usuario sea un vendedor de ventanilla
 export const requireVendedor = (req: Request, res: Response, next: NextFunction) => {
-  requireRole('vendedor_ventanilla')(req, res, next);
+  requireRole('store')(req, res, next);
 };

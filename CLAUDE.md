@@ -123,6 +123,8 @@ Required `.env` variables:
 - `PORT`: Server port (default: 3001)
 - `JWT_SECRET`: Secret key for JWT token generation (defaults to 'default_secret_key_for_dev' if not set)
 - `JWT_EXPIRES_IN`: Token expiration time (default: '24h', supports formats like '1h', '7d', '60m')
+- `STRIPE_SECRET_KEY`: Stripe secret key for payment processing
+- `STRIPE_WEBHOOK_SECRET`: Stripe webhook secret for verifying webhook events
 
 ## API Documentation
 
@@ -151,7 +153,14 @@ Routes are configured in `infrastructure/routes/index.ts` which imports individu
 
 3. **File uploads**: Use Multer middleware, then S3Service for storage (`infrastructure/services/s3.service.ts`)
 
-4. **Authentication and Authorization**:
+4. **Payment Processing**:
+   - Use `StripeService` (`infrastructure/services/stripe.service.ts`) for payment operations
+   - Checkout flow: Create session with `createCheckoutSession()`, redirect user to Stripe
+   - Verification: Use `retrieveSession()` to verify payment status
+   - Webhooks: Use `constructWebhookEventAsync()` to validate Stripe webhook events
+   - All amounts are handled in MXN currency, converted to cents (multiply by 100) for Stripe
+
+5. **Authentication and Authorization**:
    - Password hashing: Uses `PasswordService` (bcrypt) in `infrastructure/services/password.service.ts`
    - Token generation: Uses `TokenService` (JWT) in `infrastructure/services/token.service.ts`
    - Authentication patterns: Check `crear-usuario.use-case.ts` and `login.use-case.ts`

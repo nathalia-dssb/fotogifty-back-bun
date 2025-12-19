@@ -49,7 +49,7 @@ export class PrismaStoreRepository implements StoreRepositoryPort {
       activo: usuario.activo,
       codigo_empleado: usuario.stores.codigo_empleado,
       fecha_contratacion: usuario.stores.fecha_contratacion,
-      tipo: TipoUsuario.VENDEDOR_VENTANILLA
+      tipo: TipoUsuario.STORE
     };
   }
 
@@ -209,7 +209,7 @@ export class PrismaStoreRepository implements StoreRepositoryPort {
       activo: prismaStore.usuario.activo,
       codigo_empleado: prismaStore.codigo_empleado,
       fecha_contratacion: prismaStore.fecha_contratacion,
-      tipo: TipoUsuario.VENDEDOR_VENTANILLA
+      tipo: TipoUsuario.STORE
     };
   }
 }
