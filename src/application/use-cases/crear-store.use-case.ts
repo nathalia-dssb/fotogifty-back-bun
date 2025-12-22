@@ -1,5 +1,6 @@
 import { StoreEntity } from '@domain/entities/store.entity';
 import { StoreRepositoryPort } from '@domain/ports/store.repository.port';
+import { PasswordService } from '@infrastructure/services/password.service';
 
 interface CrearStoreResult {
   success: boolean;
@@ -68,8 +69,11 @@ export class CrearStoreUseCase {
         };
       }
 
-      // Crear la entidad de vendedor
-      const nuevoStore = StoreEntity.create(email, password, nombre, apellido, codigo_empleado, telefono);
+      // Hashear la contraseña antes de crear la entidad
+      const password_hash = await PasswordService.hashPassword(password);
+
+      // Crear la entidad de vendedor con la contraseña hasheada
+      const nuevoStore = StoreEntity.create(email, password_hash, nombre, apellido, codigo_empleado, telefono);
 
       // Guardar en la base de datos
       const storeGuardado = await this.storeRepository.save(nuevoStore);
