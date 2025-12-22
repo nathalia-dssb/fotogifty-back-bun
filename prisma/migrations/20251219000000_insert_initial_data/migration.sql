@@ -1,22 +1,6 @@
--- Crear usuario específico para la aplicación (si no existe)
-CREATE USER IF NOT EXISTS 'foto_pack_user'@'%' IDENTIFIED BY 'userpassword';
-GRANT ALL PRIVILEGES ON foto_pack_db.* TO 'foto_pack_user'@'%';
-FLUSH PRIVILEGES;
+-- Insert initial data for estados_pedido
+-- This migration ensures that Railway deployment has the correct order statuses
 
--- Crear tablas de estados iniciales (Prisma hará las migraciones, pero esto es por si acaso)
-CREATE TABLE IF NOT EXISTS estados_pedido (
-    id INT PRIMARY KEY,
-    nombre VARCHAR(50) NOT NULL,
-    descripcion TEXT
-);
-
-CREATE TABLE IF NOT EXISTS tipo_paquete (
-    id INT PRIMARY KEY,
-    nombre VARCHAR(50) NOT NULL,
-    descripcion TEXT
-);
-
--- Insertar datos iniciales (deben coincidir con EstadoPedido enum en pedido.entity.ts)
 INSERT IGNORE INTO estados_pedido (id, nombre, descripcion) VALUES
 (1, 'Pendiente', 'Pedido recibido, en espera de procesamiento'),
 (2, 'Enviado', 'Pedido enviado al cliente'),
@@ -26,6 +10,7 @@ INSERT IGNORE INTO estados_pedido (id, nombre, descripcion) VALUES
 (6, 'Entregado', 'Pedido entregado al cliente'),
 (7, 'Archivado', 'Pedido archivado');
 
+-- Insert initial data for tipo_paquete
 INSERT IGNORE INTO tipo_paquete (id, nombre, descripcion) VALUES
 (1, 'Básico', 'Paquetes básicos de fotos'),
 (2, 'Premium', 'Paquetes premium con más fotos'),

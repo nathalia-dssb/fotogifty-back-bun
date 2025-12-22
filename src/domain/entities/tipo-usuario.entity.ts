@@ -4,7 +4,7 @@ export enum TipoUsuario {
   CLIENTE = 'cliente',
   ADMIN = 'admin',
   SUPER_ADMIN = 'super_admin',
-  VENDEDOR_VENTANILLA = 'vendedor_ventanilla'
+  STORE = 'store'
 }
 
 export interface UsuarioConTipo extends Usuario {

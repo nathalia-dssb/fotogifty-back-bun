@@ -42,7 +42,7 @@ export class StoreEntity implements Store {
     this.activo = true;
     this.codigo_empleado = codigo_empleado;
     this.fecha_contratacion = new Date();
-    this.tipo = TipoUsuario.VENDEDOR_VENTANILLA; // Mantenemos el tipo existente en la base de datos
+    this.tipo = TipoUsuario.STORE; // Mantenemos el tipo existente en la base de datos
   }
 
   static create(
@@ -72,7 +72,7 @@ export class StoreEntity implements Store {
     store.id = id;
     store.fecha_registro = new Date();
     store.activo = activo;
-    store.tipo = TipoUsuario.VENDEDOR_VENTANILLA; // Mantenemos el tipo existente en la base de datos
+    store.tipo = TipoUsuario.STORE; // Mantenemos el tipo existente en la base de datos
     return store;
   }
 }

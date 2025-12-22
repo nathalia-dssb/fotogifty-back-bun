@@ -146,7 +146,7 @@ export class AuthController {
         return;
       }
 
-      const result = await this.loginUseCase.execute(email, password, 'vendedor_ventanilla');
+      const result = await this.loginUseCase.execute(email, password, 'store');
 
       if (result.success && result.usuario) {
         // Generar token JWT

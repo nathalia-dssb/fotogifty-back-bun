@@ -64,7 +64,7 @@ export class PrismaUsuarioRepository implements UsuarioRepositoryPort {
         });
       }
       // Si es un vendedor de ventanilla, crear también el registro en la tabla stores
-      else if (usuario.tipo && usuario.tipo === TipoUsuario.VENDEDOR_VENTANILLA) {
+      else if (usuario.tipo && usuario.tipo === TipoUsuario.STORE) {
         await prisma.stores.create({
           data: {
             usuario_id: created.id,
@@ -125,7 +125,7 @@ export class PrismaUsuarioRepository implements UsuarioRepositoryPort {
         ? TipoUsuario.SUPER_ADMIN
         : TipoUsuario.ADMIN;
     } else if (prismaUsuario.stores) {
-      tipoUsuario = TipoUsuario.VENDEDOR_VENTANILLA;
+      tipoUsuario = TipoUsuario.STORE;
     } else {
       tipoUsuario = TipoUsuario.CLIENTE;
     }
